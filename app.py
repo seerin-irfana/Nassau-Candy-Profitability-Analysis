@@ -18,10 +18,14 @@ st.set_page_config(
 
 @st.cache_data
 def load_data():
+
     df = pd.read_csv("clean_nassau.csv")
 
-    if "Order Date" in df.columns:
-        df["Order Date"] = pd.to_datetime(df["Order Date"])
+    df["Order Date"] = pd.to_datetime(
+        df["Order Date"],
+        format="%d-%m-%Y",
+        errors="coerce"
+    )
 
     return df
 
@@ -34,16 +38,8 @@ df = load_data()
 st.title("🍫 Nassau Candy Product Profitability Dashboard")
 
 st.markdown("""
-### Business Objective
-
-This dashboard helps identify:
-
-- High-profit products
-- High-margin products
-- Margin-risk products
-- Division profitability
-- Cost inefficiencies
-- Profit concentration risks
+Analyze profitability, margins, cost efficiency,
+and profit concentration across Nassau Candy products.
 """)
 
 # =====================================================
@@ -56,12 +52,12 @@ st.sidebar.header("Dashboard Filters")
 
 start_date = st.sidebar.date_input(
     "Start Date",
-    df["Order Date"].min()
+    value=df["Order Date"].min().date()
 )
 
 end_date = st.sidebar.date_input(
     "End Date",
-    df["Order Date"].max()
+    value=df["Order Date"].max().date()
 )
 
 # Division Filter
@@ -71,7 +67,7 @@ division = st.sidebar.selectbox(
     ["All"] + sorted(df["Division"].unique())
 )
 
-# Margin Filter
+# Margin Threshold
 
 margin_threshold = st.sidebar.slider(
     "Minimum Margin %",
@@ -118,10 +114,10 @@ filtered_df = filtered_df[
 ]
 
 # =====================================================
-# KPI SECTION
+# KPI CARDS
 # =====================================================
 
-st.subheader("Key Performance Indicators")
+st.subheader("📊 Key Performance Indicators")
 
 c1, c2, c3, c4 = st.columns(4)
 
@@ -157,7 +153,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 ])
 
 # =====================================================
-# TAB 1 - PRODUCT ANALYSIS
+# PRODUCT ANALYSIS
 # =====================================================
 
 with tab1:
@@ -234,7 +230,7 @@ with tab1:
     )
 
 # =====================================================
-# TAB 2 - DIVISION ANALYSIS
+# DIVISION ANALYSIS
 # =====================================================
 
 with tab2:
@@ -281,12 +277,12 @@ with tab2:
     )
 
 # =====================================================
-# TAB 3 - COST DIAGNOSTICS
+# COST DIAGNOSTICS
 # =====================================================
 
 with tab3:
 
-    st.subheader("Cost vs Sales Analysis")
+    st.subheader("Cost vs Sales")
 
     fig = px.scatter(
         filtered_df,
@@ -302,7 +298,7 @@ with tab3:
         use_container_width=True
     )
 
-    st.subheader("Margin Risk Products")
+    st.subheader("Margin Risk Products (<20%)")
 
     risk_products = filtered_df[
         filtered_df["Gross Margin %"] < 20
@@ -320,7 +316,7 @@ with tab3:
     )
 
 # =====================================================
-# TAB 4 - PARETO ANALYSIS
+# PARETO ANALYSIS
 # =====================================================
 
 with tab4:
@@ -377,7 +373,7 @@ with tab4:
     )
 
 # =====================================================
-# DOWNLOAD BUTTON
+# DOWNLOAD DATA
 # =====================================================
 
 st.download_button(
